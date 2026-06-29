@@ -1,0 +1,12 @@
+site_name: AI-Augmented Data Engineering Roadmap
+site_description: Markdown-first learning platform for core data engineering and AI-native workflows.
+base_url: ""
+nav:
+  - title: Home
+    path: index.md
+  - title: Roadmap
+    section: roadmap
+  - title: Skills
+    section: skills
+  - title: Projects
+    section: projects

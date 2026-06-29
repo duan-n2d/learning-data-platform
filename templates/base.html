@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title }} | {{ site.site_name }}</title>
+  <meta name="description" content="{{ description or site.site_description }}" />
+  <link rel="stylesheet" href="{{ root_prefix }}assets/styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="{{ root_prefix }}index.html">
+        <span class="brand-mark">DE</span>
+        <span>{{ site.site_name }}</span>
+      </a>
+      <div class="search-box">
+        <input id="searchInput" placeholder="Search lessons..." autocomplete="off" />
+        <div id="searchResults" class="search-results"></div>
+      </div>
+      <nav class="nav">
+        {{ sidebar|safe }}
+      </nav>
+    </aside>
+    <main class="content">
+      <div class="topbar">
+        <button id="themeToggle" class="theme-toggle">Toggle theme</button>
+        <span class="meta-pill">Markdown-first · Static HTML · Python build</span>
+      </div>
+      <article class="article">
+        {{ content|safe }}
+      </article>
+    </main>
+  </div>
+  <script>window.__ROOT_PREFIX__ = "{{ root_prefix }}";</script>
+  <script src="{{ root_prefix }}assets/search.js"></script>
+</body>
+</html>

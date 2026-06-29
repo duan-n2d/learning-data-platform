@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SQL Window Functions | AI-Augmented Data Engineering Roadmap</title>
+  <meta name="description" content="Learn ranking, running totals, lag/lead, and analytical SQL patterns." />
+  <link rel="stylesheet" href="../../assets/styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="../../index.html">
+        <span class="brand-mark">DE</span>
+        <span>AI-Augmented Data Engineering Roadmap</span>
+      </a>
+      <div class="search-box">
+        <input id="searchInput" placeholder="Search lessons..." autocomplete="off" />
+        <div id="searchResults" class="search-results"></div>
+      </div>
+      <nav class="nav">
+        <div class="nav-section">Start</div>
+<a class="nav-link" style="" href="../../index.html">AI-Augmented Data Engineering Roadmap</a>
+<div class="nav-section">Roadmap</div>
+<a class="nav-link" style="" href="../../roadmap/phase-1-core-foundation.html">Phase 1 - Core Foundation</a>
+<a class="nav-link" style="" href="../../roadmap/phase-2-modern-analytics-ai.html">Phase 2 - Modern Analytics + AI Bridge</a>
+<a class="nav-link" style="" href="../../roadmap/phase-3-ai-native-workflows.html">Phase 3 - AI-Native Workflows</a>
+<div class="nav-section">Skills</div>
+<a class="nav-link" style="padding-left: 30px;" href="../../skills/ai/semantic-layer.html">Semantic Layer</a>
+<a class="nav-link" style="padding-left: 30px;" href="../../skills/python/data-pipelines.html">Python for Data Pipelines</a>
+<a class="nav-link active" style="padding-left: 30px;" href="../../skills/sql/window-functions.html">SQL Window Functions</a>
+<a class="nav-link" style="padding-left: 30px;" href="../../skills/ai/text-to-sql.html">Text2SQL Patterns</a>
+<a class="nav-link" style="padding-left: 30px;" href="../../skills/sql/query-optimization.html">SQL Query Optimization</a>
+<a class="nav-link" style="padding-left: 30px;" href="../../skills/ai/rag-pipeline.html">RAG Pipeline for Internal Data</a>
+<div class="nav-section">Projects</div>
+<a class="nav-link" style="" href="../../projects/project-1-analytics-warehouse.html">Project 1 - Core Analytics Warehouse</a>
+<a class="nav-link" style="" href="../../projects/project-2-text2sql-chatbot.html">Project 2 - Text2SQL Chatbot</a>
+<a class="nav-link" style="" href="../../projects/project-3-rag-internal-docs.html">Project 3 - RAG for Internal Data Docs</a>
+<a class="nav-link" style="" href="../../projects/project-4-llm-extraction-pipeline.html">Project 4 - LLM Extraction Pipeline</a>
+<a class="nav-link" style="" href="../../projects/project-5-ai-data-platform.html">Project 5 - AI Data Platform</a>
+      </nav>
+    </aside>
+    <main class="content">
+      <div class="topbar">
+        <button id="themeToggle" class="theme-toggle">Toggle theme</button>
+        <span class="meta-pill">Markdown-first · Static HTML · Python build</span>
+      </div>
+      <article class="article">
+        <h1 id="sql-window-functions">SQL Window Functions<a class="headerlink" href="#sql-window-functions" title="Permanent link">&para;</a></h1>
+<p>Window functions allow you to calculate values across related rows while keeping row-level detail.</p>
+<h2 id="common-patterns">Common patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">select</span>
+<span style="color: #bbbbbb">  </span>customer_id,
+<span style="color: #bbbbbb">  </span>order_date,
+<span style="color: #bbbbbb">  </span>revenue,
+<span style="color: #bbbbbb">  </span><span style="color: #008000; font-weight: bold">sum</span>(revenue)<span style="color: #bbbbbb"> </span>over<span style="color: #bbbbbb"> </span>(
+<span style="color: #bbbbbb">    </span>partition<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">by</span><span style="color: #bbbbbb"> </span>customer_id
+<span style="color: #bbbbbb">    </span><span style="color: #008000; font-weight: bold">order</span><span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">by</span><span style="color: #bbbbbb"> </span>order_date
+<span style="color: #bbbbbb">  </span>)<span style="color: #bbbbbb"> </span><span style="color: #008000; font-weight: bold">as</span><span style="color: #bbbbbb"> </span>running_revenue
+<span style="color: #008000; font-weight: bold">from</span><span style="color: #bbbbbb"> </span>fact_orders;
+</code></pre></div>
+
+<h2 id="why-it-matters">Why it matters<a class="headerlink" href="#why-it-matters" title="Permanent link">&para;</a></h2>
+<p>Most analytics engineering work depends on understanding grain, partitions, ordering, and business metric logic.</p>
+      </article>
+    </main>
+  </div>
+  <script>window.__ROOT_PREFIX__ = "../../";</script>
+  <script src="../../assets/search.js"></script>
+</body>
+</html>
