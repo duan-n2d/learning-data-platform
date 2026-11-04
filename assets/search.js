@@ -1,5 +1,6 @@
 (function () {
   const root = window.__ROOT_PREFIX__ || "";
+  const language = window.__LANGUAGE__ || "en";
   const savedTheme = localStorage.getItem("theme") || "light";
   document.documentElement.setAttribute("data-theme", savedTheme);
 
@@ -18,7 +19,7 @@
 
   fetch(root + "search-index.json")
     .then((r) => r.json())
-    .then((data) => { index = data; })
+    .then((data) => { index = data.filter((item) => item.language === language); })
     .catch(() => {});
 
   function normalize(s) { return (s || "").toLowerCase(); }
