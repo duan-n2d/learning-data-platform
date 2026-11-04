@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import posixpath
 import re
 import shutil
 from dataclasses import dataclass
@@ -25,6 +26,8 @@ class Page:
     source: Path
     rel_source: Path
     output_rel: Path
+    language: str
+    language_url: str
     title: str
     description: str
     section: str
@@ -103,20 +106,27 @@ def load_pages() -> list[Page]:
     pages: list[Page] = []
     for path in sorted(CONTENT_DIR.rglob("*.md")):
         rel = path.relative_to(CONTENT_DIR)
+        language = "vi" if rel.parts[0] == "vi" else "en"
+        content_rel = Path(*rel.parts[1:]) if language == "vi" else rel
         raw = path.read_text(encoding="utf-8")
         meta, body = parse_frontmatter(raw)
-        section = rel.parts[0] if len(rel.parts) > 1 else "home"
+        section = content_rel.parts[0] if len(content_rel.parts) > 1 else "home"
         title = str(meta.get("title") or first_heading(body, path.stem.replace("-", " ").title()))
         description = str(meta.get("description") or "")
         order = int(meta.get("order") or 999)
         tags = meta.get("tags") or []
         if isinstance(tags, str):
             tags = [tags]
+        content_output = output_path_for(content_rel)
+        output_rel = Path("vi") / content_output if language == "vi" else content_output
+        language_url = content_output.as_posix() if language == "vi" else (Path("vi") / content_output).as_posix()
         pages.append(
             Page(
                 source=path,
-                rel_source=rel,
-                output_rel=output_path_for(rel),
+                rel_source=content_rel,
+                output_rel=output_rel,
+                language=language,
+                language_url=language_url,
                 title=title,
                 description=description,
                 section=section,
@@ -132,20 +142,21 @@ def load_pages() -> list[Page]:
 def make_sidebar(pages: list[Page], current: Page) -> str:
     grouped: dict[str, list[Page]] = {}
     for p in pages:
+        if p.language != current.language:
+            continue
         grouped.setdefault(p.section, []).append(p)
 
     labels = {
-        "home": "Start",
-        "roadmap": "Roadmap",
-        "skills": "Skills",
-        "projects": "Projects",
+        "en": {"home": "Start", "roadmap": "Roadmap", "skills": "Skills", "projects": "Projects"},
+        "vi": {"home": "Bắt đầu", "roadmap": "Lộ trình", "skills": "Kỹ năng", "projects": "Dự án"},
     }
+    section_labels = labels[current.language]
     order = ["home", "roadmap", "skills", "projects"]
     html_parts: list[str] = []
     for section in order + [s for s in grouped if s not in order]:
         if section not in grouped:
             continue
-        html_parts.append(f'<div class="nav-section">{labels.get(section, section.title())}</div>')
+        html_parts.append(f'<div class="nav-section">{section_labels.get(section, section.title())}</div>')
         for p in sorted(grouped[section], key=lambda x: (x.order, x.rel_source.as_posix())):
             active = " active" if p.output_rel == current.output_rel else ""
             depth = len(p.rel_source.parts) - 1
@@ -191,6 +202,17 @@ def build() -> None:
                 content=page.html,
                 sidebar=make_sidebar(pages, page),
                 root_prefix=root_prefix_for(page),
+                language=page.language,
+                language_url=f"{root_prefix_for(page)}{page.language_url}",
+                home_url=posixpath.relpath(
+                    (Path("vi") if page.language == "vi" else Path()) / "index.html",
+                    page.output_rel.parent.as_posix() or ".",
+                ),
+                language_label="English" if page.language == "vi" else "Tiếng Việt",
+                site_name=site.get("site_name_vi", site["site_name"]) if page.language == "vi" else site["site_name"],
+                search_placeholder="Tìm bài học..." if page.language == "vi" else "Search lessons...",
+                theme_toggle="Đổi giao diện" if page.language == "vi" else "Toggle theme",
+                meta_label="Markdown · HTML tĩnh · Python" if page.language == "vi" else "Markdown-first · Static HTML · Python build",
             ),
             encoding="utf-8",
         )
@@ -200,6 +222,7 @@ def build() -> None:
             "title": p.title,
             "description": p.description,
             "section": p.section,
+            "language": p.language,
             "tags": p.tags,
             "url": p.url,
             "text": p.text[:5000],
