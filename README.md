@@ -128,3 +128,8 @@ The build requires the Python packages in `requirements.txt`. It removes and rec
 ## Deployment
 
 You can deploy the `dist/` folder to GitHub Pages, Cloudflare Pages, Netlify, or Vercel.
+
+## Related
+
+- [Modern Data Engineering Deck](https://github.com/duan-n2d/modern-data-stack) — a slide-based companion covering 23 data engineering layers, with an interactive knowledge graph ([live](https://duan-n2d.github.io/modern-data-stack/)).
+- [Dylxn Assistant](https://github.com/duan-n2d/dylxn-assistant) — a local RAG assistant for asking questions over data-engineering notes.
