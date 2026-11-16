@@ -43,6 +43,15 @@ Classify schema changes as compatible, conditionally compatible, or breaking for
 
 A backfill reprocesses a declared event-time range using a known source snapshot or replayable log. Specify how outputs are replaced or merged, how concurrent scheduled runs are prevented from overwriting each other, and how totals are reconciled. Record the code and schema versions used so the result can be explained later.
 
+## Deeper lessons
+
+- [Event streaming platforms](event-streaming-platforms.html): queues vs pub/sub vs logs, Apache Kafka internals, Schema Registry compatibility modes, and Pulsar, Redpanda, Confluent, and Fluss.
+- [Stream processing with Flink](stream-processing-flink.html): checkpoints, Iceberg commits, streaming analytics, and micro-batching vs continuous processing.
+- [CDC with Debezium and Kafka Connect](cdc-with-debezium.html): log-based capture into Iceberg, replication, and zero-ETL.
+- [Managed and open ingestion tools](managed-and-open-ingestion-tools.html): Airbyte, Fivetran, and dlt.
+- [API and event ingestion](api-and-event-ingestion.html): REST, GraphQL, webhooks, and event sourcing.
+- [Streaming architectures and recovery](streaming-architectures-and-recovery.html): Lambda vs Kappa, dead letter queues, and replays.
+
 ## Practice
 
 Design ingestion for a source that updates order status and can delete test records. Compare a daily snapshot, timestamp watermark, and CDC log. Define keys, delete handling, offsets, late arrivals, schema change policy, replay range, deduplication, and a reconciliation check. State the freshness requirement that would justify streaming over batch.

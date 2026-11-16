@@ -48,9 +48,74 @@ Dữ liệu chủ biểu diễn entity cốt lõi như khách hàng, sản phẩ
 
 Quy trình master data tập trung có thể tăng tính nhất quán nhưng thêm độ trễ và overhead governance. Bắt đầu từ vấn đề liên hệ giữa các hệ thống và quyền sở hữu cần thiết, không mặc định phải cài công cụ MDM.
 
+## Data Stewardship
+
+Data stewardship giao cho những người cụ thể trách nhiệm hằng ngày về ý nghĩa, chất lượng và việc sử dụng đúng đắn dữ liệu trong một domain. **Owner** ra quyết định (một trường có nghĩa gì, ai được truy cập, khi nào breaking change được chấp nhận); **steward** giữ cho các quyết định đó chính xác và hiển thị rõ: duy trì thuật ngữ glossary và mô tả, rà soát phân loại, cùng producer phân loại xử lý sự cố chất lượng, và trả lời câu hỏi của consumer. Người giám hộ kỹ thuật (platform engineer hoặc data engineer) vận hành các hệ thống cưỡng chế những quyết định đó.
+
+**Cách hoạt động.** Steward được giao theo domain hoặc data product, không theo công cụ. Trong data mesh, mỗi team domain có steward riêng, còn một nhóm governance trung tâm đặt tiêu chuẩn chung (mức phân loại, quy ước đặt tên, metadata bắt buộc) và audit chúng. Công việc stewardship chảy qua các hàng đợi: dataset mới cần mô tả và phân loại, sự cố chất lượng cần phân loại xử lý, yêu cầu truy cập cần rà soát, và định nghĩa cần đối chiếu.
+
+**Ví dụ (minh họa bảng RACI stewardship cho domain khách hàng):**
+
+| Hoạt động | Owner | Steward | Platform engineer | Consumer |
+|---|---|---|---|---|
+| Duyệt định nghĩa "khách hàng active" | A | R | I | C |
+| Phân loại cột mới | A | R | C | I |
+| Phân loại xử lý check chất lượng thất bại | I | A | R | I |
+| Duyệt truy cập cột PII | A | R | I (triển khai) | I |
+| Ngừng dùng một bảng | A | R | R | C |
+
+R = thực hiện (responsible), A = chịu trách nhiệm cuối (accountable), C = được tham vấn (consulted), I = được thông báo (informed).
+
+**Lỗi thường gặp.** Stewardship là việc phụ không có nguồn lực nên hàng đợi phình to; một steward trung tâm cho mọi domain; steward không có thẩm quyền chặn một định nghĩa sai; mục catalog bị bất kỳ ai sửa mà không có rà soát.
+
+**Kiểm chứng.** Mọi tài sản certified có steward cụ thể vẫn còn làm trong domain đó; theo dõi tuổi hàng đợi và tỷ lệ tài sản có mô tả, phân loại còn cập nhật.
+
+**Vị trí trong lakehouse / Text2SQL.** Steward duyệt mô tả, từ đồng nghĩa và ví dụ mà trợ lý sử dụng. Đối xử với thay đổi ngữ cảnh đó như thay đổi mã, có steward rà soát. Xem [Metadata Catalog, khám phá dữ liệu và lineage](metadata-catalogs-and-lineage.html) về công cụ.
+
+## Data Classification
+
+Phân loại dữ liệu là quá trình nhận diện dữ liệu và gắn nhãn theo mức nhạy cảm và yêu cầu xử lý để các biện pháp kiểm soát phù hợp được áp dụng tự động. Nhãn chỉ hữu ích khi mỗi mức ánh xạ tới quy tắc cụ thể.
+
+**Ví dụ (minh họa lược đồ phân loại):**
+
+| Mức | Ví dụ | Xử lý mặc định |
+|---|---|---|
+| Public | Danh mục sản phẩm đã công bố | Không hạn chế |
+| Internal | Số đơn hàng, chỉ số vận hành không chứa dữ liệu cá nhân | Nhân viên có nhu cầu công việc |
+| Confidential | Định danh khách hàng, doanh thu theo khách hàng, hợp đồng | Truy cập theo vai trò, masking ngoài vai trò được duyệt, mã hóa khi lưu trữ |
+| Restricted | Số định danh quốc gia, dữ liệu thanh toán, dữ liệu sức khỏe, credential | Cột được tokenize hoặc mã hóa, người duyệt cụ thể, truy cập được ghi log và rà soát |
+
+**Cách hoạt động.** Producer khai báo phân loại trong contract; bộ quét tự động đề xuất tag cho cột mới từ tên và mẫu giá trị; steward xác nhận hoặc sửa. Tag được lưu trong catalog và, nếu được hỗ trợ, lan truyền qua lineage tới cột phái sinh. Chính sách theo tag (masking, row filter, lưu giữ) sau đó gắn vào tag thay vì vào từng bảng.
+
+```yaml
+# Minh họa tag cột trong contract của model
+columns:
+  - name: email
+    tags: [classification.confidential, pii.email]
+  - name: national_id
+    tags: [classification.restricted, pii.government_id]
+  - name: country
+    tags: [classification.internal]
+```
+
+**Lỗi thường gặp.** Cột chưa phân loại mặc định bị coi là public (hãy để "chưa phân loại" được xử lý như confidential); phân loại bảng nhưng bỏ qua cột văn bản tự do bên trong; tag không lan sang bảng phái sinh, extract hoặc vector index; tin bộ quét mà không rà soát.
+
+**Kiểm chứng.** Báo cáo tỷ lệ cột đã phân loại theo từng lớp; cho CI fail khi cột mart mới thiếu phân loại; lấy mẫu bảng phái sinh để xác nhận tag đã được kế thừa.
+
+**Vị trí trong lakehouse / Text2SQL.** Dùng phân loại để lọc ngữ cảnh schema và allow-list của trợ lý: mặc định chỉ cột `public` và `internal`, các cột khác chỉ khi vai trò của người dùng cuối cho phép. Kỹ thuật bảo vệ quyền riêng tư cho các mức cao hơn được trình bày trong [Quyền riêng tư và bảo vệ PII](privacy-and-pii-protection.html), còn việc cưỡng chế trong [Kiểm soát truy cập](access-control-rbac-rls-cls.html).
+
 ## Biến chính sách thành thực thi
 
 Chuyển chính sách thành phân loại catalog, quyền warehouse, masking, retention job, schema check và quy tắc duyệt CI. Kiểm thử cả truy cập được phép lẫn bị từ chối. Với dữ liệu nhạy cảm, kiểm tra bản sao đi đâu, log nào chứa giá trị, AI provider nào nhận prompt và thao tác xóa lan tới bảng/index phát sinh ra sao.
+
+## Bài liên quan
+
+- [Metadata Catalog, khám phá dữ liệu và lineage](metadata-catalogs-and-lineage.html)
+- [Công cụ chất lượng dữ liệu và observability](data-quality-tooling-and-observability.html)
+- [Kiểm soát truy cập: RBAC, bảo mật cấp dòng và cấp cột](access-control-rbac-rls-cls.html)
+- [Quyền riêng tư và bảo vệ PII](privacy-and-pii-protection.html)
+- [Mã hóa và quản lý khóa](encryption-and-key-management.html)
+- [Tư thế bảo mật và mô hình hóa mối đe dọa](security-posture-and-threat-modeling.html)
 
 ## Bài tập
 

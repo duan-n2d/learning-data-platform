@@ -39,6 +39,12 @@ For late-arriving data, use a documented lookback or correction process. Do not 
 
 Track run start/end, task attempts, input/output counts, freshness, duration, and failure category. Alert on missed delivery expectations and persistent failures, not on every transient retry. Link alerts to a runbook with an owner, safe retry steps, and escalation guidance.
 
+## Go deeper
+
+- [Cron and orchestrators compared](orchestrators-compared.html): when cron is enough, and Airflow, Dagster, Prefect, and Mage side by side.
+- [DataOps, CI/CD, and infrastructure as code](dataops-ci-cd-and-iac.html): CI/CD for data, continuous deployment, data as code, and Terraform.
+- [Containers and Kubernetes for data](containers-and-kubernetes-for-data.html): Docker images for pipeline tasks and running them on Kubernetes.
+
 ## Practice
 
 Draw a DAG for daily orders and customer data feeding a revenue mart. Mark tasks that may run in parallel, define an idempotency strategy for each write, and simulate a failure after staging but before publication. Show how a retry avoids duplicate facts and how the incident is detected.

@@ -40,6 +40,12 @@ Keep metric definitions in a reviewed semantic layer or governed BI model. Defin
 5. Measure usage and query cost; remove unused complexity.
 6. Review metric changes and test key dashboards against known fixtures.
 
+## Go deeper
+
+- [Headless BI and universal semantic layers](headless-bi-and-semantic-layers.html): headless BI, universal semantic layers, and Looker.
+- [BI tools, visualization, and self-service analytics](bi-tools-and-self-service.html): Tableau, Power BI, Apache Superset, Metabase, chart design, and data literacy.
+- [Reverse ETL, operational analytics, and CDPs](reverse-etl-and-activation.html): Hightouch, Census, and customer data platforms.
+
 ## Practice
 
 Take daily paid revenue by region. Define the metric and its date basis, then design one dashboard, one API response, and one ad hoc analysis path. State how each applies permissions, what freshness users see, and how you detect that the three surfaces disagree.

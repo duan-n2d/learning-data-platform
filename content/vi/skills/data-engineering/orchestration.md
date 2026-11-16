@@ -39,6 +39,12 @@ Với dữ liệu đến muộn, dùng lookback hoặc quy trình sửa dữ li�
 
 Theo dõi thời điểm bắt đầu/kết thúc, số lần thử task, số bản ghi vào/ra, freshness, thời lượng và nhóm lỗi. Cảnh báo khi trễ cam kết phân phối hoặc lỗi kéo dài, không cảnh báo mọi lần retry tạm thời. Nối cảnh báo với runbook có chủ sở hữu, bước retry an toàn và hướng escalation.
 
+## Tìm hiểu sâu hơn
+
+- [So sánh cron và các orchestrator](orchestrators-compared.html): khi nào cron là đủ, và so sánh Airflow, Dagster, Prefect, Mage.
+- [DataOps, CI/CD và hạ tầng dưới dạng mã](dataops-ci-cd-and-iac.html): CI/CD cho dữ liệu, continuous deployment, data as code và Terraform.
+- [Container và Kubernetes cho dữ liệu](containers-and-kubernetes-for-data.html): Docker image cho task pipeline và chạy chúng trên Kubernetes.
+
 ## Bài tập
 
 Vẽ DAG cho dữ liệu đơn hàng và khách hàng hằng ngày cấp cho mart doanh thu. Đánh dấu task chạy song song, chọn chiến lược idempotency cho từng lần ghi, mô phỏng lỗi sau staging nhưng trước công bố. Chỉ ra retry tránh nhân đôi fact và sự cố được phát hiện ra sao.

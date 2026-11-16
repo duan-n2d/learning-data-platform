@@ -40,6 +40,12 @@ Giữ định nghĩa metric trong semantic layer hoặc mô hình BI được du
 5. Đo mức sử dụng và chi phí query; loại bỏ phần phức tạp không dùng.
 6. Rà thay đổi metric và kiểm tra dashboard quan trọng với fixture chuẩn.
 
+## Tìm hiểu sâu hơn
+
+- [Headless BI và semantic layer phổ quát](headless-bi-and-semantic-layers.html): headless BI, universal semantic layer và Looker.
+- [Công cụ BI, trực quan hóa và phân tích tự phục vụ](bi-tools-and-self-service.html): Tableau, Power BI, Apache Superset, Metabase, thiết kế biểu đồ và năng lực dữ liệu.
+- [Reverse ETL, phân tích vận hành và CDP](reverse-etl-and-activation.html): Hightouch, Census và nền tảng dữ liệu khách hàng.
+
 ## Bài tập
 
 Lấy doanh thu thanh toán theo ngày và khu vực. Định nghĩa metric, cơ sở ngày; thiết kế một dashboard, một response API và một đường phân tích ad hoc. Nêu cách mỗi bề mặt áp dụng quyền, hiển thị freshness và phát hiện ba bề mặt không khớp.

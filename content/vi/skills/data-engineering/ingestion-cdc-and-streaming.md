@@ -43,6 +43,15 @@ Phân loại thay đổi schema là tương thích, có điều kiện hoặc ph
 
 Backfill xử lý lại khoảng event time đã khai báo bằng snapshot nguồn đã biết hoặc log có thể replay. Nêu cách thay thế/merge đầu ra, ngăn lịch chạy đồng thời ghi đè nhau và đối soát tổng ra sao. Ghi phiên bản mã và schema để sau này giải thích được kết quả.
 
+## Bài học chuyên sâu
+
+- [Nền tảng event streaming](event-streaming-platforms.html): queue, pub/sub và log, nội bộ Apache Kafka, các chế độ tương thích của Schema Registry, cùng Pulsar, Redpanda, Confluent và Fluss.
+- [Xử lý luồng với Flink](stream-processing-flink.html): checkpoint, commit Iceberg, streaming analytics, micro-batching so với xử lý liên tục.
+- [CDC với Debezium và Kafka Connect](cdc-with-debezium.html): capture dựa trên log vào Iceberg, replication và zero-ETL.
+- [Công cụ ingestion managed và mã nguồn mở](managed-and-open-ingestion-tools.html): Airbyte, Fivetran và dlt.
+- [Ingestion từ API và sự kiện](api-and-event-ingestion.html): REST, GraphQL, webhook và event sourcing.
+- [Kiến trúc streaming và khôi phục](streaming-architectures-and-recovery.html): Lambda và Kappa, dead letter queue và replay.
+
 ## Bài tập
 
 Thiết kế ingestion cho nguồn có thể cập nhật trạng thái đơn và xóa record thử nghiệm. So sánh snapshot ngày, watermark timestamp và log CDC. Xác định khóa, xử lý xóa, offset, dữ liệu muộn, chính sách schema, khoảng replay, khử trùng và bước đối soát. Nêu freshness nào đủ để chọn streaming thay batch.

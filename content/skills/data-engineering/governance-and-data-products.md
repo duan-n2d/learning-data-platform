@@ -48,9 +48,74 @@ Master data represents core entities such as customer, product, or supplier shar
 
 A centralized master-data process can improve consistency but may add latency and governance overhead. Start with the cross-system problem and required ownership rather than introducing a master data management tool by default.
 
+## Data Stewardship
+
+Data stewardship assigns named people day-to-day accountability for the meaning, quality, and appropriate use of data in a domain. The **owner** decides (what a field means, who may access it, when a breaking change is acceptable); the **steward** keeps those decisions accurate and visible: maintaining glossary terms and descriptions, reviewing classifications, triaging quality issues with producers, and answering consumer questions. Technical custodians (platform or data engineers) operate the systems that enforce the decisions.
+
+**How it works.** Stewards are assigned per domain or data product, not per tool. In a data mesh, each domain team has its own stewards, while a central governance group sets shared standards (classification levels, naming, required metadata) and audits them. Stewardship work flows through queues: new datasets to describe and classify, quality incidents to triage, access requests to review, and definitions to reconcile.
+
+**Example (illustrative stewardship RACI for a customer domain):**
+
+| Activity | Owner | Steward | Platform engineer | Consumers |
+|---|---|---|---|---|
+| Approve definition of "active customer" | A | R | I | C |
+| Classify new columns | A | R | C | I |
+| Triage failed quality check | I | A | R | I |
+| Approve access to PII columns | A | R | I (implements) | I |
+| Deprecate a table | A | R | R | C |
+
+R = responsible, A = accountable, C = consulted, I = informed.
+
+**Failure modes.** Stewardship as an unfunded side task, so queues grow; one central steward for every domain; stewards without authority to block a bad definition; catalog entries edited by anyone with no review.
+
+**Validation.** Every certified asset has a named steward who is still employed in that domain; track queue age and the share of assets with current descriptions and classifications.
+
+**Lakehouse / Text2SQL fit.** Stewards approve the descriptions, synonyms, and examples the assistant uses. Treat changes to that context like code changes, reviewed by the steward. See [Metadata Catalogs, Discovery, and Lineage](metadata-catalogs-and-lineage.html) for the tooling.
+
+## Data Classification
+
+Data classification is the process of identifying data and labelling it by sensitivity and handling requirements so the right controls apply automatically. Labels are only useful when each level maps to concrete rules.
+
+**Example (illustrative classification scheme):**
+
+| Level | Examples | Default handling |
+|---|---|---|
+| Public | Published product catalogue | No restriction |
+| Internal | Order counts, non-personal operational metrics | Employees with a business need |
+| Confidential | Customer identifiers, revenue by customer, contracts | Role-based access, masking outside approved roles, encrypted at rest |
+| Restricted | National IDs, payment data, health data, credentials | Tokenised or encrypted columns, named approvers, access logged and reviewed |
+
+**How it works.** Producers declare classifications in contracts; automated scanners propose tags for new columns from names and value patterns; stewards confirm or correct them. Tags are stored in the catalog and, where supported, propagated through lineage to derived columns. Tag-based policies (masking, row filters, retention) then attach to the tag rather than to each table.
+
+```yaml
+# Illustrative column tags in a model contract
+columns:
+  - name: email
+    tags: [classification.confidential, pii.email]
+  - name: national_id
+    tags: [classification.restricted, pii.government_id]
+  - name: country
+    tags: [classification.internal]
+```
+
+**Failure modes.** Unclassified columns treated as public by default (make "unclassified" behave like confidential); classification of a table but not of a free-text column inside it; tags not propagated to derived tables, extracts, or vector indexes; scanners trusted without review.
+
+**Validation.** Report the share of columns classified per layer; fail CI when a new mart column lacks a classification; sample derived tables to confirm tags were inherited.
+
+**Lakehouse / Text2SQL fit.** Use classification to filter the schema context and allow-list for the assistant: only `public` and `internal` columns by default, others only when the end user's role permits. Privacy techniques for the higher levels are covered in [Privacy and PII Protection](privacy-and-pii-protection.html), and enforcement in [Access Control](access-control-rbac-rls-cls.html).
+
 ## Make policy executable
 
 Translate policy into catalog classifications, warehouse permissions, masking, retention jobs, schema checks, and CI review rules. Test both allowed and denied access. For sensitive data, verify where copies travel, which logs include values, which AI providers receive prompts, and how deletion propagates to derived tables and indexes.
+
+## Related lessons
+
+- [Metadata Catalogs, Discovery, and Lineage](metadata-catalogs-and-lineage.html)
+- [Data Quality Tooling and Observability](data-quality-tooling-and-observability.html)
+- [Access Control: RBAC, Row- and Column-Level Security](access-control-rbac-rls-cls.html)
+- [Privacy and PII Protection](privacy-and-pii-protection.html)
+- [Encryption and Key Management](encryption-and-key-management.html)
+- [Security Posture and Threat Modeling](security-posture-and-threat-modeling.html)
 
 ## Practice
 
