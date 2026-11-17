@@ -38,6 +38,12 @@ Assumption used in examples: a Git repository containing dbt models, semantic-la
 
 **Validation.** Track lead time from pull request to production, change failure rate, mean time to restore after a data incident, and the share of incidents caught by tests before users noticed.
 
+### DataOps vs. MLOps
+
+DataOps and MLOps share the same underlying principles — automation, collaboration, standardization, and observability — applied to different scopes. DataOps applies DevOps-style practices across the full data lifecycle: ingestion, transformation, modeling, testing, and serving. MLOps applies the same philosophy specifically to the machine learning model lifecycle: training, versioning, deployment, and drift monitoring.
+
+The boundary is not a hard line. A model's training pipeline — the queries and transformations that build its feature set — is itself a DataOps concern: it needs version control, tests, and CI like any other pipeline. MLOps starts once there is a model artifact to version, deploy, and monitor for drift. A platform that only does DataOps can build reliable features but has no answer for "which model version is serving traffic, and is its accuracy degrading"; a platform that only does MLOps has nothing reliable to train on if the upstream data pipeline is not already under DataOps discipline.
+
 ## CI/CD for Data
 
 **What it is.** CI/CD for data applies continuous integration (automatically building and testing every change) and continuous delivery or deployment (automatically releasing tested changes) to pipelines, SQL models, semantic definitions, and platform code.

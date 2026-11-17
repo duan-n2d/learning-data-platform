@@ -38,6 +38,12 @@ Giả định dùng trong ví dụ: một repository Git chứa dbt model, YAML 
 
 **Kiểm định.** Theo dõi lead time từ pull request tới production, tỷ lệ thay đổi gây lỗi, thời gian trung bình để khôi phục sau sự cố dữ liệu, và tỷ lệ sự cố được test bắt trước khi người dùng nhận ra.
 
+### DataOps so với MLOps
+
+DataOps và MLOps chia sẻ cùng nguyên tắc nền tảng — tự động hóa, cộng tác, chuẩn hóa và khả năng quan sát — áp dụng cho phạm vi khác nhau. DataOps áp dụng thực hành kiểu DevOps xuyên suốt vòng đời dữ liệu: ingestion, biến đổi, modeling, kiểm thử và serving. MLOps áp dụng cùng triết lý đó riêng cho vòng đời model machine learning: training, versioning, deployment và giám sát drift.
+
+Ranh giới giữa hai thứ không phải đường thẳng cứng. Pipeline training của một model — các truy vấn và phép biến đổi xây feature set — tự nó là mối quan tâm của DataOps: nó cần version control, test và CI như mọi pipeline khác. MLOps bắt đầu khi đã có một artifact model cần version, deploy và giám sát drift. Một nền tảng chỉ làm DataOps có thể xây feature đáng tin nhưng không trả lời được "phiên bản model nào đang phục vụ traffic, và độ chính xác có đang suy giảm"; một nền tảng chỉ làm MLOps thì không có gì đáng tin để train nếu pipeline dữ liệu upstream chưa theo kỷ luật DataOps.
+
 ## CI/CD for Data
 
 **Là gì.** CI/CD cho dữ liệu áp dụng tích hợp liên tục (tự động build và kiểm thử mọi thay đổi) và continuous delivery hoặc deployment (tự động phát hành thay đổi đã kiểm thử) cho pipeline, SQL model, định nghĩa semantic và mã nền tảng.

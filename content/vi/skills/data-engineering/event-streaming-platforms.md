@@ -130,6 +130,18 @@ curl -s -X POST -H "Content-Type: application/vnd.schemaregistry.v1+json" \
 
 **Kiểm định.** Chạy endpoint kiểm tra tương thích trong CI cho mọi thay đổi schema, review thay đổi ngữ nghĩa trong data contract, và cảnh báo khi topic nhận record có schema ID lạ hoặc chưa đăng ký.
 
+## Schema Drift
+
+**Là gì.** Schema drift (trôi schema) là sự phân kỳ không chủ ý, không được điều phối giữa các schema đáng lẽ phải đồng bộ với nhau: ví dụ hai replica của cùng một database nguồn được chụp (snapshot) ở hai thời điểm khác nhau, nhiều nguồn ingestion cùng nạp vào một bảng đích nhưng mỗi nguồn tự quyết định cách biểu diễn một trường theo cách riêng, hoặc một hệ thống nguồn âm thầm đổi kiểu dữ liệu hay ý nghĩa của một cột mà không báo cho ai ở downstream. Không ai lên kế hoạch cho sự phân kỳ này và không ai gắn version cho nó.
+
+**Khác với schema evolution ra sao.** Schema evolution là thay đổi có chủ ý và được quản lý: producer thêm trường, tăng version schema, và registry kiểm tra tương thích trước khi thay đổi được triển khai (xem phần Schema Registry ở trên). Schema drift là kiểu lỗi ngược lại: thay đổi xảy ra ngoài quy trình đó, không được thông báo, và chỉ bị phát hiện khi có gì đó hỏng hoặc dữ liệu bị âm thầm sai lệch.
+
+**Khác với "concept drift" / "data drift" trong ML ra sao.** Tên gọi giống nhau dễ gây nhầm lẫn. Concept drift trong ML (và khái niệm liên quan data drift) mô tả sự dịch chuyển thống kê trong phân phối của input mô hình, hoặc trong mối quan hệ giữa input và target, theo thời gian — ví dụ hành vi chi tiêu của khách hàng thay đổi sau một chương trình khuyến mãi. Đó là vấn đề về giá trị dữ liệu trong mô hình hóa, không phải thay đổi về cấu trúc hay kiểu của schema. Schema drift là vấn đề cấu trúc/metadata: hình dạng hoặc ý nghĩa của một trường không còn khớp với điều mọi consumer đã giả định, bất kể tính chất thống kê của dữ liệu có đổi hay không.
+
+**Ví dụ (minh họa).** Một consumer `lake-ingest` đọc từ ba replica theo vùng của cùng bảng `orders`. DBA của một replica nới `discount_pct` từ `decimal(5,2)` thành `decimal(7,2)` để hỗ trợ quy tắc khuyến mãi mới, mà không báo cho đội dữ liệu; hai replica còn lại vẫn giữ kiểu cũ. Pipeline CDC, vốn giả định một schema dùng chung cho mọi replica, hoặc làm fail batch từ replica đã đổi, hoặc tệ hơn, cắt bớt giá trị khi ghi và âm thầm làm sai tổng chiết khấu cho vùng đó — kiểu sai lệch vẫn vô hình cho đến khi báo cáo đối soát downstream bị vỡ.
+
+**Kiểu lỗi / Kiểm định.** Xem việc phát hiện drift là độc lập với kiểm tra tương thích: so sánh schema quan sát được giữa mọi instance, replica hoặc nguồn đáng lẽ phải giống hệt nhau, theo lịch định kỳ chứ không chỉ tại thời điểm deploy, và cảnh báo khi có bất kỳ phân kỳ nào dù từng schema riêng lẻ vẫn "hợp lệ". Kiểm tra tương thích trong registry chỉ bảo vệ lịch sử version của riêng một producer; nó không nói gì về việc hai producer đáng lẽ phải khớp nhau có đang âm thầm không khớp hay không.
+
 ## Apache Pulsar
 
 **Là gì.** Apache Pulsar là nền tảng messaging và streaming mã nguồn mở tách phần phục vụ khỏi phần lưu trữ: **broker** không trạng thái xử lý client, còn các node **Apache BookKeeper** (bookie) lưu dữ liệu dưới dạng *ledger* được nhân bản.

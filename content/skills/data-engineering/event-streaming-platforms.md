@@ -130,6 +130,18 @@ curl -s -X POST -H "Content-Type: application/vnd.schemaregistry.v1+json" \
 
 **Validation.** Run the compatibility endpoint in CI for every schema change, review semantic changes in the data contract, and alert when a topic receives records with an unknown or unregistered schema ID.
 
+## Schema Drift
+
+**What it is.** Schema drift is uncoordinated, unintentional divergence between schemas that are supposed to stay in sync: for example, two replicas of the same source database snapshotted at different times, several ingestion sources feeding the same downstream table that each independently decided how to represent a field, or a source system silently changing a column's type or meaning without notifying anyone downstream. Nobody planned the divergence and nobody versioned it.
+
+**How it differs from schema evolution.** Schema evolution is intentional and managed: a producer adds a field, bumps a schema version, and the registry checks compatibility before the change ships (see Schema Registry above). Schema drift is the opposite failure mode: a change happens outside that process, unannounced, and is discovered only when something breaks or silently corrupts output.
+
+**How it differs from ML "concept drift" / "data drift".** The similar name is a false friend. ML concept drift (and the related term data drift) describes a statistical shift in the distribution of model inputs, or in the relationship between inputs and the target, over time — for example customer spending patterns changing after a promotion. That is a modeling problem about values, not a change in the schema's structure or types. Schema drift is a structural/metadata problem: the shape or meaning of a field no longer matches what every consumer assumed, independent of whether the data's statistical properties changed at all.
+
+**Example (illustrative).** A `lake-ingest` consumer reads from three regional replicas of the same `orders` table. One replica's DBA widens `discount_pct` from `decimal(5,2)` to `decimal(7,2)` to support a new promotion rule, without telling the data team; the other two replicas keep the old type. The CDC pipeline, which assumed one shared schema across replicas, either fails the batch from the changed replica or, worse, truncates values on write and silently corrupts discount totals for that region — corruption that stays invisible until a downstream reconciliation report breaks.
+
+**Failure modes / Validation.** Treat drift detection as orthogonal to compatibility checks: compare observed schemas across all instances, replicas, or sources that are supposed to be identical, on a schedule rather than only at deploy time, and alert on any divergence even if each individual schema is internally "valid." A compatibility check in the registry only protects one producer's own version history; it says nothing about whether two producers that are supposed to agree have quietly stopped agreeing.
+
 ## Apache Pulsar
 
 **What it is.** Apache Pulsar is an open-source messaging and streaming platform that separates serving from storage: stateless **brokers** handle clients, while **Apache BookKeeper** nodes (bookies) store data as replicated *ledgers*.

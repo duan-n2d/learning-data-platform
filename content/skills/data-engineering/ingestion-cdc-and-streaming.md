@@ -15,7 +15,12 @@ Ingestion moves source data across a boundary. The design must preserve identity
 - A **watermark-based incremental load** reads records newer than a timestamp or sequence. It is efficient when the source has a reliable update field; late updates and clock issues require a lookback or reconciliation strategy.
 - **Change data capture (CDC)** reads inserts, updates, and deletes from database change logs or an equivalent source mechanism. It can preserve change order and transaction metadata, but requires careful offset management, schema handling, and delete semantics.
 
-Choose based on source capability, freshness needs, volume, history requirements, and operational skill. CDC is not automatically more correct than a well-designed batch snapshot.
+Two more named delta-load strategies cover sources without CDC support or where capturing deletes matters more than freshness:
+
+- **Trigger-based delta capture** adds database triggers that write every inserted, updated, or deleted row into a dedicated change-log table as the write happens. *Pro:* it captures deletes reliably without needing access to the database's internal transaction log. *Con:* it adds write load directly on the source system (each business write now triggers a second write), and the change-log table itself can become a bottleneck or a new single point of contention under high write volume.
+- **Full-scan hash-and-compare reconciliation** reads the entire source table on each run, computes a hash per row (or per business key), and compares those hashes against the previous run's stored hashes to detect changed, new, and deleted rows. *Pro:* it works against any source, with no CDC, trigger, or log access required. *Con:* it is expensive at scale because it rescans and rehashes the full table every run, so it is only practical for small-to-medium tables.
+
+Choose based on source capability, freshness needs, volume, history requirements, and operational skill. CDC is not automatically more correct than a well-designed batch snapshot, and these two fallback strategies trade freshness and efficiency for reliability on sources that cannot support CDC.
 
 ## ETL, ELT, and movement patterns
 

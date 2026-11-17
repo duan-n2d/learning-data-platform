@@ -72,7 +72,22 @@ Lộ trình thực dụng: bắt đầu với cron cộng các chốt chặn ở
 
 **Airflow** (Apache) là orchestrator được triển khai rộng rãi nhất. Bạn định nghĩa DAG gồm các task bằng Python; scheduler kích hoạt lượt chạy theo data interval; executor chạy task trên worker, Celery hoặc pod Kubernetes. Nó có hệ sinh thái provider package rất lớn. Airflow 3 (phát hành 2025) làm lại nhiều phần, gồm đánh phiên bản DAG và đổi tên "dataset" thành "asset" cho lập lịch theo dữ liệu — hãy xác nhận nền tảng của bạn chạy phiên bản chính nào trước khi chép ví dụ.
 
+**Chọn operator cho Airflow.** Cùng một task Airflow có thể chạy logic nghiệp vụ qua các operator khác nhau, và lựa chọn thực chất là mã chạy ở đâu và bị ràng buộc với gì:
+
+- **PythonOperator** chạy logic nghiệp vụ ngay trong tiến trình worker Airflow. Đơn giản nhất để viết và debug, nhưng ràng buộc chặt mã của bạn với chính môi trường Python và dependency đã cài trên worker Airflow, nên xung đột phiên bản thư viện giữa hai task trở thành vấn đề triển khai Airflow. *Khuyến nghị:* đội nhỏ dùng một stack Python duy nhất, được kiểm soát tốt.
+- **DockerOperator** chạy task trong container riêng, tách dependency của task khỏi môi trường worker. Cần Docker khả dụng cho (hoặc truy cập được từ) worker, và thêm bước build image/registry vào vòng lặp phát triển. *Khuyến nghị:* đội cần cách ly dependency nhưng đã quản lý image container sẵn và chưa cần đến Kubernetes đầy đủ.
+- **KubernetesPodOperator** chạy task như một pod Kubernetes riêng với image, resource request và vòng đời riêng. Cho cách ly mạnh nhất và cho phép đội đóng góp task bằng bất kỳ ngôn ngữ hay image nào, không chỉ Python, đổi lại là độ phức tạp hạ tầng tăng thêm và độ trễ khởi động pod ở mỗi lần chạy task. *Khuyến nghị:* đội đa ngôn ngữ, hoặc bất kỳ đội nào gặp xung đột dependency nặng giữa các task mà một mình DockerOperator không giải quyết gọn gàng.
+
 **Dagster** hướng asset: bạn khai báo các dataset (asset) mà mã tạo ra, phụ thuộc, partition và check của chúng. Lịch sử chạy được tổ chức quanh asset, nên độ mới và lineage hiển thị sẵn.
+
+**Dagster và công cụ cho AI agent.** Dagster đã đầu tư để đồ thị asset của nó dễ đọc với AI agent và dễ bảo trì ở mức ít code hơn. Nó cung cấp một MCP server phơi bày đồ thị asset, catalog và trạng thái run/check để một AI agent có thể trả lời "bảng này được nuôi bởi gì" hay "vì sao asset này lỗi" mà không cần con người lần theo mã thủ công. Nó cũng hỗ trợ **Dagster Components**: định nghĩa asset viết bằng YAML thay vì Python, nhằm để một agent (hoặc người đóng góp không rành Python) có thể khai báo asset mới mà không cần viết đầy đủ definition bằng tay. Xem cả hai là công cụ hỗ trợ năng suất, không thay thế việc review những gì được triển khai: một component hay asset do agent viết vẫn cần cùng mức chủ sở hữu, check và review thay đổi như mã viết tay.
+
+**Các lựa chọn triển khai Dagster.** Dagster chạy production có thể theo nhiều cách, mỗi cách đánh đổi quyền kiểm soát với công sức vận hành khác nhau:
+
+- **Tự vận hành trên Kubernetes qua Helm** — toàn quyền kiểm soát hạ tầng, phiên bản và ranh giới mạng, đổi lại phải tự vận hành và nâng cấp cluster.
+- **Docker Compose** — lựa chọn tự vận hành nhẹ hơn cho quy mô nhỏ hoặc một máy chủ duy nhất; đơn giản hơn Kubernetes nhưng ít đảm bảo về scale và cách ly hơn.
+- **AWS ECS** — tự vận hành trên nền container orchestration managed; ít gánh nặng vận hành Kubernetes hơn, nhưng vẫn là tài khoản AWS và chi phí bạn phải quản lý.
+- **Dagster+ (managed)** — dịch vụ hosted của chính Dagster; dựng nhanh nhất và ít gánh nặng vận hành nhất, nhưng ít kiểm soát vị trí hạ tầng, thời điểm nâng cấp và ranh giới mạng hơn so với tự vận hành.
 
 Cả hai được trình bày ở mức khái niệm trong [Điều phối pipeline](orchestration.html). Hai công cụ dưới đây là lựa chọn mới hơn với trải nghiệm sử dụng khác.
 

@@ -9,6 +9,12 @@ tags: [BI, OLAP, analytics API, serving]
 
 Analytics serving is the interface between trusted data and the decisions people make. Choose an interface based on users, latency, exploration needs, consistency requirements, and operational ownership.
 
+## Business Intelligence
+
+Business Intelligence (BI) is the discipline of turning operational and analytical data into dashboards, reports, and ad hoc queries that support business decisions. Its lifecycle runs from data collection and transformation, through metric definition and visualization, to distribution of the result to the decision-makers who act on it.
+
+A dashboard commonly follows a trust and adoption lifecycle: it works well in a demo on a small, controlled dataset, then breaks down once it reaches production scale — numbers disagree across teams, queries slow down under concurrent use, and stakeholders lose trust and route around it with spreadsheets. Avoiding that decline takes centrally governed metric definitions and monitored data freshness, not just a faster dashboard tool. See [Headless BI and universal semantic layers](headless-bi-and-semantic-layers.html) for how a shared semantic layer solves the definition half of that problem.
+
 ## From reporting to interactive analytics
 
 Traditional reporting often presents scheduled, predefined measures. Modern BI supports filtering, drill-down, exploratory analysis, and sharing. OLAP systems organize and aggregate multidimensional data so users can compare measures across dimensions such as time, product, and region.
@@ -26,6 +32,18 @@ A cube is a conceptual model of measures and dimensions; it need not be a litera
 | Reverse ETL | Activate selected warehouse data in operational tools | Write ownership, freshness, idempotency, and reconciliation |
 
 Federation can avoid copies for some use cases, but query engines still need to handle source availability, pushdown capability, permissions, and inconsistent schema or semantics. A federation layer does not automatically create a single source of truth.
+
+### Analytics API as a unified architecture
+
+"Analytics API" is often used for more than a single endpoint: it names a pattern that bundles five components behind one API surface so application teams get consistent metrics without touching each piece directly:
+
+1. A **query engine or gateway** that accepts requests, typically over REST or GraphQL, and routes them to the right backend.
+2. A **metrics or semantic layer** holding shared metric definitions so every caller gets the same answer for the same question.
+3. A **data catalog** that makes it discoverable what metrics and datasets are available to query.
+4. **Orchestration** that keeps the data behind the API fresh on a known schedule.
+5. A **SQL connector or execution layer** underneath that actually runs the query against the warehouse or engine.
+
+This repository already covers each piece on its own page — the semantic layer, the catalog, and orchestration each have dedicated treatment. The point of naming the combination here is recognition: when a vendor or a team describes "our Analytics API," check which of these five components it actually bundles and which it assumes you already have.
 
 ## Metric consistency
 

@@ -35,6 +35,12 @@ Phân biệt event time với processing time. Lượt chạy hằng ngày cần
 
 Với dữ liệu đến muộn, dùng lookback hoặc quy trình sửa dữ liệu đã tài liệu hóa. Đừng dựa vào một watermark chỉ tiến lên nếu nguồn có thể sửa dữ liệu cũ.
 
+**Các kiểu lỗi của backfill.** Chạy backfill không giống chạy lặp lại nhiều lần một lượt chạy theo lịch bình thường; nó lỗi theo những cách riêng:
+
+- **Quá tải tài nguyên:** quá nhiều task backfill chạy đồng thời tranh giành năng lực cluster hoặc warehouse mà các lượt chạy theo lịch thường cần, khiến backfill làm đói chính các pipeline mà nó định sửa. Giảm thiểu bằng giới hạn concurrency hoặc pool riêng, giới hạn số task backfill chạy cùng lúc, tách biệt khỏi năng lực dành cho lượt chạy theo lịch.
+- **Quá tải chi phí:** xử lý lại nhiều tuần hoặc nhiều tháng dữ liệu cùng lúc có thể làm chi phí compute hoặc warehouse tăng vọt vượt xa một lượt chạy theo lịch thông thường, thường không ai nhận ra cho đến khi hóa đơn tới. Giảm thiểu bằng cách chia backfill thành các khoảng ngày nhỏ hơn và theo dõi chi phí khi từng phần hoàn tất, thay vì chạy toàn bộ khoảng một lúc.
+- **"Lạc giữa chừng" khi lỗi một phần:** một backfill chạy lâu bị lỗi giữa chừng, và không rõ khoảng ngày nào đã thành công, khoảng nào lỗi, khoảng nào chưa từng chạy. Giảm thiểu bằng ghi idempotent cộng với log hoàn thành hoặc checkpoint rõ ràng theo từng phần, để lần retry xác định chính xác phần nào còn thiếu và chỉ xử lý lại phần đó, thay vì toàn bộ khoảng hoặc không gì cả.
+
 ## Tín hiệu vận hành
 
 Theo dõi thời điểm bắt đầu/kết thúc, số lần thử task, số bản ghi vào/ra, freshness, thời lượng và nhóm lỗi. Cảnh báo khi trễ cam kết phân phối hoặc lỗi kéo dài, không cảnh báo mọi lần retry tạm thời. Nối cảnh báo với runbook có chủ sở hữu, bước retry an toàn và hướng escalation.

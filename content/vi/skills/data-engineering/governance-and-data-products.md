@@ -40,7 +40,18 @@ Data product là giao diện được hỗ trợ cho nhu cầu consumer xác đ�
 | Chính sách thay đổi | Xử lý thêm mới, breaking change và deprecation ra sao? |
 | Hỗ trợ | Chủ sở hữu, đường sự cố và kỳ vọng khôi phục |
 
-Một bảng chưa tự động là Data Product. Không gắn nhãn “product” nếu thiếu consumer, contract được duy trì và đường hỗ trợ.
+Một bảng chưa tự động là Data Product. Không gắn nhãn "product" nếu thiếu consumer, contract được duy trì và đường hỗ trợ.
+
+## So sánh Data Contract, Data Product, Data Mesh và Governance
+
+Bốn thuật ngữ này mô tả các lớp liên quan nhưng ở "độ cao" khác nhau, và thường bị dùng lẫn lộn như từ đồng nghĩa. Thực ra không phải vậy:
+
+- **Data contract (hợp đồng dữ liệu)** - trả lời "cái gì": một thỏa thuận kỹ thuật cụ thể về schema, ngữ nghĩa và SLA (freshness, chất lượng, chính sách thay đổi) giữa một producer và các consumer của nó. Xem [Chất lượng dữ liệu và hợp đồng](data-quality-contracts.html).
+- **Data product (sản phẩm dữ liệu)** - trả lời "vì sao/cho ai": một tập dữ liệu được đối xử như sản phẩm, có chủ sở hữu cụ thể, tài liệu và tiêu chuẩn chất lượng, thường được hiện thực qua một hoặc nhiều data contract (bảng "Hợp đồng Data Product" ở trên).
+- **Data mesh** - một mẫu hình tổ chức và kiến trúc: các team domain sở hữu data product của mình từ đầu đến cuối, dưới các tiêu chuẩn governance liên bang (federated) do trung tâm đặt ra. Data product và contract đứng sau nó là những khối xây dựng mà một mesh được lắp từ đó, không phải điều kiện bắt buộc để dùng riêng từng thuật ngữ.
+- **Data governance (quản trị dữ liệu)** - lớp chính sách và tuân thủ bao trùm (chủ sở hữu, phân loại, truy cập, lưu giữ) mà contract và product vận hành bên trong, dù có mesh hay không.
+
+**Một tranh luận thật sự, chưa phải sự thật đã chốt.** Một số người thực hành cho rằng "data contract" phần lớn chỉ đóng gói lại những ý tưởng mà schema evolution (xem [Nền tảng event streaming](event-streaming-platforms.html)) và công cụ chất lượng dữ liệu đã bao phủ từ trước, dưới một cái tên mới dễ bán hơn, và điều thực sự mới chỉ là về mặt tổ chức: đặt tên một chủ sở hữu hướng tới consumer và một SLA, chứ không phải cơ chế thực thi. Hãy giữ sự hoài nghi đó khi đánh giá tuyên bố của vendor hay một quy trình nội bộ mới - hỏi xem năng lực nào thực sự mới so với chỉ là đổi tên.
 
 ## Dữ liệu chủ và tham chiếu
 

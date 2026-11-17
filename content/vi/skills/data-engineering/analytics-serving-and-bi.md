@@ -9,6 +9,12 @@ tags: [BI, OLAP, analytics API, serving]
 
 Analytics serving là giao diện giữa dữ liệu đáng tin và quyết định của người dùng. Chọn giao diện theo đối tượng, độ trễ, nhu cầu khám phá, tính nhất quán và trách nhiệm vận hành.
 
+## Business Intelligence
+
+Business Intelligence (BI) là ngành biến dữ liệu vận hành và phân tích thành dashboard, báo cáo và truy vấn ad hoc hỗ trợ quyết định kinh doanh. Vòng đời của nó chạy từ thu thập và biến đổi dữ liệu, qua định nghĩa metric và trực quan hóa, tới phân phối kết quả cho người ra quyết định hành động dựa trên đó.
+
+Dashboard thường đi theo một vòng đời tin tưởng và áp dụng: nó chạy tốt trong demo trên tập dữ liệu nhỏ, kiểm soát được, rồi xuống cấp khi chạm quy mô production — số liệu lệch nhau giữa các nhóm, truy vấn chậm lại khi nhiều người dùng cùng lúc, và stakeholder mất tin tưởng rồi quay sang dùng spreadsheet riêng. Tránh sự xuống cấp đó cần định nghĩa metric được quản trị tập trung và freshness dữ liệu được giám sát, không chỉ cần công cụ dashboard nhanh hơn. Xem [Headless BI và semantic layer phổ quát](headless-bi-and-semantic-layers.html) để biết semantic layer dùng chung giải quyết nửa phần định nghĩa của vấn đề này ra sao.
+
 ## Từ báo cáo tới phân tích tương tác
 
 Báo cáo truyền thống thường trình bày metric định sẵn theo lịch. BI hiện đại hỗ trợ lọc, drill-down, khám phá và chia sẻ. Hệ thống OLAP tổ chức/tổng hợp dữ liệu đa chiều để so measure theo thời gian, sản phẩm, khu vực.
@@ -26,6 +32,18 @@ Cube là mô hình khái niệm của measure và dimension, không nhất thi�
 | Reverse ETL | Kích hoạt dữ liệu warehouse chọn lọc trong công cụ vận hành | Chủ sở hữu ghi, freshness, idempotency, đối soát |
 
 Federation tránh sao chép trong một số trường hợp, nhưng query engine vẫn phải xử lý availability nguồn, khả năng pushdown, quyền và khác biệt schema/ngữ nghĩa. Lớp federation không tự tạo nguồn sự thật duy nhất.
+
+### Analytics API như một kiến trúc hợp nhất
+
+"Analytics API" thường được dùng cho nhiều hơn một endpoint đơn lẻ: nó đặt tên cho một mẫu đóng gói năm thành phần sau một bề mặt API duy nhất, để nhóm ứng dụng nhận metric nhất quán mà không phải đụng vào từng phần riêng lẻ:
+
+1. **Query engine hoặc gateway** nhận request, thường qua REST hoặc GraphQL, và định tuyến tới backend phù hợp.
+2. **Metric hoặc semantic layer** giữ định nghĩa metric dùng chung để mọi caller nhận cùng câu trả lời cho cùng câu hỏi.
+3. **Data catalog** giúp khám phá được metric và dataset nào có thể truy vấn.
+4. **Orchestration** giữ dữ liệu phía sau API luôn mới theo lịch đã biết.
+5. **SQL connector hoặc lớp thực thi** bên dưới thực sự chạy truy vấn trên warehouse hoặc engine.
+
+Repository này đã có trang riêng cho từng phần — semantic layer, catalog và orchestration đều được trình bày riêng. Mục đích của việc đặt tên tổ hợp này ở đây là để nhận diện: khi một vendor hay một nhóm mô tả "Analytics API của chúng tôi", hãy kiểm tra họ thực sự đóng gói phần nào trong năm phần trên, và phần nào họ mặc định bạn đã có sẵn.
 
 ## Nhất quán metric
 

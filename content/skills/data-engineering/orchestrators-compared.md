@@ -72,7 +72,22 @@ A pragmatic path: start with cron plus the guards above for one job, and move to
 
 **Airflow** (Apache) is the most widely deployed orchestrator. You define DAGs of tasks in Python; a scheduler triggers runs per data interval; executors run tasks on workers, Celery, or Kubernetes pods. It has a very large ecosystem of provider packages. Airflow 3 (released 2025) reworked several areas, including DAG versioning and renaming "datasets" to "assets" for data-aware scheduling — confirm which major version your platform runs before copying examples.
 
+**Airflow operator choice.** The same Airflow task can run its business logic through different operators, and the choice is really about where the code executes and what it is coupled to:
+
+- **PythonOperator** runs the task's business logic inline in the Airflow worker process. It is the simplest to write and debug, but it couples your code tightly to the Airflow worker's own Python environment and installed dependencies, so a library version conflict between two tasks becomes an Airflow deployment problem. *Recommendation:* a small team on a single, well-controlled Python stack.
+- **DockerOperator** runs the task in its own container, decoupling the task's dependencies from the worker's environment. It needs Docker available to (or reachable from) the worker, and adds image-build and registry steps to the development loop. *Recommendation:* teams that need dependency isolation but already manage container images and don't need full Kubernetes.
+- **KubernetesPodOperator** runs the task as its own Kubernetes pod with its own image, resource requests, and lifecycle. It gives the strongest isolation and lets teams contribute tasks in any language or image, not just Python, at the cost of added infrastructure complexity and pod-startup latency on every task run. *Recommendation:* mixed-language teams, or any team hitting heavy dependency conflicts between tasks that DockerOperator alone does not resolve cleanly.
+
 **Dagster** is asset-oriented: you declare the datasets (assets) your code produces, their dependencies, partitions, and checks. Run history is organized around assets, which makes freshness and lineage visible by default.
+
+**Dagster and AI-agent tooling.** Dagster has invested in making its asset graph legible to AI agents and lower-code to maintain. It ships an MCP server that exposes the asset graph, catalog, and run/check status so an AI agent can answer "what feeds this table" or "why did this asset fail" without a human tracing code by hand. It also supports **Dagster Components**: asset definitions expressed in YAML rather than Python, aimed at letting an agent (or a less Python-fluent contributor) declare a new asset without writing a full definition by hand. Treat both as productivity aids, not a replacement for reviewing what gets deployed: a component or an agent-authored asset still needs the same ownership, checks, and change review as hand-written code.
+
+**Dagster deployment options.** Production Dagster can run several ways, each with a different control-versus-effort tradeoff:
+
+- **Self-hosted on Kubernetes via Helm** — full control over infrastructure, versions, and network boundaries, at the cost of operating and upgrading the cluster yourself.
+- **Docker Compose** — a lighter self-hosted option for smaller setups or a single host; simpler than Kubernetes but with fewer scaling and isolation guarantees.
+- **AWS ECS** — self-hosted on managed container orchestration; less Kubernetes operational overhead, still your AWS account and cost to manage.
+- **Dagster+ (managed)** — Dagster's own hosted offering; fastest to stand up and least operational burden, but less control over infrastructure placement, upgrade timing, and network boundaries than self-hosting.
 
 Both are covered conceptually in [Pipeline orchestration](orchestration.html). The two tools below are newer alternatives with different ergonomics.
 

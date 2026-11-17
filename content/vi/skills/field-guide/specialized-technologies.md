@@ -27,6 +27,24 @@ Dimension biến đổi chậm giữ lịch sử thuộc tính mô tả. Type 1 
 
 Time travel đọc hoặc khôi phục snapshot bảng cũ nếu storage hỗ trợ. Nó hữu ích cho audit, tái tạo và khôi phục nhưng bị giới hạn bởi retention, ghi đồng thời, catalog và hết hạn snapshot. Xem đây là tính năng recovery đã kiểm thử, không thay backup hay retention nguồn.
 
+### Cú pháp time travel theo engine
+
+Cú pháp phụ thuộc engine; luôn kiểm tra hành vi hiện tại theo tài liệu engine đang dùng vì default thay đổi theo phiên bản. Ví dụ minh họa:
+
+```sql
+-- Delta Lake / Spark SQL: đọc theo timestamp hoặc version
+select * from orders timestamp as of '2026-01-01';
+select * from orders version as of 42;
+
+-- Liệt kê các version có sẵn và timestamp tương ứng (Delta)
+describe history orders;
+
+-- Iceberg (extension Spark SQL) và một số engine theo chuẩn SQL: system time
+select * from orders for system_time as of timestamp '2026-01-01 00:00:00';
+```
+
+Retention không vô hạn: cửa sổ mặc định thường gặp là khoảng bảy ngày trước khi version cũ bị vacuum hoặc hết hạn, nhưng con số mặc định chính xác và cách cấu hình khác nhau theo engine và đổi theo phiên bản, nên kiểm tra tài liệu hiện hành thay vì giả định một con số cố định. Với bảng rất lớn, giữ nhiều version cũ có chi phí lưu trữ thật — mỗi version được giữ lại có thể ghim data file lẽ ra đã xóa được — nên đặt retention có chủ đích thay vì để mọi version tồn tại mãi.
+
 ## ACID và thay đổi schema
 
 Transaction ACID bảo đảm atomicity, consistency, isolation và durability trong ranh giới transaction xác định. Trên platform dữ liệu, ranh giới có thể không trải qua database nguồn, object storage, catalog, job biến đổi và consumer. Tài liệu hóa commit nào làm dữ liệu hiển thị và lượt chạy nhiều bước thất bại để lại gì.

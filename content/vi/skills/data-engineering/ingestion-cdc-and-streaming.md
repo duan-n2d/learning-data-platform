@@ -15,7 +15,12 @@ Ingestion chuyển dữ liệu qua một ranh giới hệ thống. Thiết kế 
 - **Tải incremental theo watermark** đọc bản ghi mới hơn timestamp hoặc sequence. Hiệu quả khi nguồn có trường cập nhật đáng tin; cập nhật muộn và sai lệch đồng hồ cần lookback hoặc đối soát.
 - **Change Data Capture (CDC)** đọc insert, update, delete từ log thay đổi database hoặc cơ chế tương đương. Có thể giữ thứ tự và metadata transaction nhưng cần quản lý offset, schema và ngữ nghĩa xóa cẩn thận.
 
-Chọn theo khả năng nguồn, freshness, volume, nhu cầu lịch sử và năng lực vận hành. CDC không mặc định chính xác hơn snapshot batch thiết kế tốt.
+Hai chiến lược delta-load khác đáng đặt tên riêng, dùng cho nguồn không hỗ trợ CDC hoặc khi việc bắt được các bản ghi bị xóa quan trọng hơn độ mới:
+
+- **Trigger-based delta capture** thêm trigger database để ghi mọi bản ghi insert, update, delete vào một bảng change-log riêng ngay khi thao tác ghi xảy ra. *Ưu điểm:* bắt được delete một cách đáng tin cậy mà không cần truy cập transaction log nội bộ của database. *Nhược điểm:* tăng tải ghi trực tiếp lên hệ thống nguồn (mỗi lần ghi nghiệp vụ giờ kích hoạt thêm một lần ghi nữa), và bản thân bảng change-log có thể trở thành điểm nghẽn hoặc điểm tranh chấp mới khi lượng ghi lớn.
+- **Full-scan hash-and-compare reconciliation** đọc toàn bộ bảng nguồn ở mỗi lượt chạy, tính hash cho từng dòng (hoặc theo business key), rồi so với hash của lượt chạy trước để phát hiện dòng thay đổi, mới hoặc đã xóa. *Ưu điểm:* hoạt động với bất kỳ nguồn nào, không cần CDC, trigger hay quyền truy cập log. *Nhược điểm:* tốn kém ở quy mô lớn vì phải quét và hash lại toàn bộ bảng mỗi lượt chạy, nên chỉ thực tế với bảng nhỏ đến trung bình.
+
+Chọn theo khả năng nguồn, freshness, volume, nhu cầu lịch sử và năng lực vận hành. CDC không mặc định chính xác hơn snapshot batch thiết kế tốt, và hai chiến lược dự phòng này đánh đổi freshness và hiệu năng để lấy độ tin cậy trên các nguồn không hỗ trợ CDC.
 
 ## ETL, ELT và các mẫu di chuyển
 

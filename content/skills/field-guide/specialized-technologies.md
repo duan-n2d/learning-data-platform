@@ -27,6 +27,24 @@ A slowly changing dimension preserves changes in descriptive attributes. Type 1 
 
 Time travel reads or restores a previous table snapshot where the storage system supports it. It is useful for audit, reproducibility, and recovery, but retention, concurrent writes, catalog behavior, and snapshot expiration constrain it. Treat it as a tested recovery feature, not a substitute for backups or source retention.
 
+### Time travel syntax by engine
+
+Syntax is engine-specific; always confirm current behavior against your engine's documentation since defaults change across versions. Representative examples:
+
+```sql
+-- Delta Lake / Spark SQL: read as of a timestamp or a version number
+select * from orders timestamp as of '2026-01-01';
+select * from orders version as of 42;
+
+-- List available versions and their timestamps (Delta)
+describe history orders;
+
+-- Iceberg (Spark SQL extension) and several SQL-standard engines: system time
+select * from orders for system_time as of timestamp '2026-01-01 00:00:00';
+```
+
+Retention is not indefinite: a common default window is around seven days before old versions are vacuumed or expired, but the exact default and how it is configured vary by engine and change between releases, so check current documentation rather than assuming a number. For a very large table, keeping many old versions around has a real storage cost — each retained version can pin otherwise-removable data files — so set retention deliberately rather than leaving every version forever.
+
 ## ACID and schema change
 
 ACID transactions provide atomicity, consistency, isolation, and durability within a defined transaction boundary. In a data platform, that boundary may not span source databases, object storage, catalogs, transformation jobs, and downstream consumers. Document where a commit becomes visible and what a failed multi-step run leaves behind.

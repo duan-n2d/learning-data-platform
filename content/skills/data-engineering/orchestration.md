@@ -35,6 +35,12 @@ Distinguish event time from processing time. A daily run should declare which bu
 
 For late-arriving data, use a documented lookback or correction process. Do not rely on a single ever-advancing watermark if the source can revise older records.
 
+**Backfill failure modes.** Running a backfill is not the same operation as running a normal scheduled interval repeated many times; it fails in its own ways:
+
+- **Resource overload:** too many backfill tasks running concurrently compete for the cluster or warehouse capacity that regular scheduled runs need, so a backfill can starve the pipelines it was meant to repair. Mitigate with concurrency limits or dedicated pools that cap how many backfill tasks run at once, separate from the capacity reserved for scheduled runs.
+- **Cost overload:** reprocessing weeks or months of data at once can spike compute or warehouse cost well beyond what a single scheduled run costs, often without anyone noticing until the bill arrives. Mitigate by chunking the backfill into smaller date ranges and monitoring cost as each chunk completes, instead of launching the full range at once.
+- **"Lost in the middle" on partial failure:** a long-running backfill fails partway through, and it becomes unclear which date ranges succeeded, which failed, and which never ran at all. Mitigate with idempotent writes plus an explicit per-chunk completion log or checkpoint, so a retry can determine exactly what is missing and reprocess only that, rather than the whole range or nothing.
+
 ## Operational signals
 
 Track run start/end, task attempts, input/output counts, freshness, duration, and failure category. Alert on missed delivery expectations and persistent failures, not on every transient retry. Link alerts to a runbook with an owner, safe retry steps, and escalation guidance.

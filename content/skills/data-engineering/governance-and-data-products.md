@@ -42,6 +42,17 @@ A data product is a supported interface for a defined consumer need, with an own
 
 A table is not automatically a data product. Avoid product labels without a consumer, maintained contract, and support path.
 
+## Data Contracts vs. Data Product vs. Data Mesh vs. Governance
+
+These four terms describe related layers at different altitudes, and are often used loosely as synonyms. They are not:
+
+- **Data contract** - the "what": a specific, technical agreement on schema, semantics, and SLA (freshness, quality, change policy) between one producer and its consumers. See [Data Quality and Contracts](data-quality-contracts.html).
+- **Data product** - the "why/for whom": a dataset treated as a product, with a named owner, documentation, and a quality bar, usually implemented through one or more data contracts (the "Data product contract" table above).
+- **Data mesh** - an organizational and architectural pattern: domain teams own their data products end to end, under federated governance standards set centrally. Data products and the contracts behind them are building blocks a mesh is assembled from, not a prerequisite for using either term on its own.
+- **Data governance** - the overarching policy and compliance layer (ownership, classification, access, retention) that contracts and products operate within, mesh or no mesh.
+
+**A genuine debate, not a settled fact.** Some practitioners argue "data contract" mostly repackages ideas that schema evolution (see [Event Streaming Platforms](event-streaming-platforms.html)) and data quality tooling already covered, under a newer, more marketable name, and that what is actually new is organizational - naming a consumer-facing owner and an SLA, not the enforcement mechanism itself. Treat the term with that skepticism when evaluating a vendor claim or a new internal process: ask what capability is actually new versus relabeled.
+
 ## Master and reference data
 
 Master data represents core entities such as customer, product, or supplier shared across systems. Reference data provides controlled lists such as country codes, lifecycle states, or currencies. Define authoritative sources, identifiers, match/merge rules, and conflict resolution. Preserve source identifiers and history so harmonization does not erase provenance.

@@ -50,6 +50,19 @@ Trước khi join, nêu grain của hai phía và cardinality dự kiến. Join 
 
 Sơ đồ thực thể-quan hệ (ERD) chỉ hữu ích khi định nghĩa entity và cardinality rõ ràng. Đánh dấu quan hệ tùy chọn, khóa định danh và grain của entity sự kiện. Dùng mô hình khái niệm để giải quyết ý nghĩa nghiệp vụ trước khi tối ưu schema vật lý.
 
+## Các tầng mô hình hóa xuyên suốt pipeline
+
+Trục khái niệm/logic/vật lý ở trên nói về mức độ model đã cam kết vào chi tiết hiện thực. Một trục thứ hai, bổ sung cho trục trên, nói về *vị trí trong vòng đời dữ liệu* mà quyết định mô hình hóa được đưa ra. Cùng một entity nghiệp vụ hoàn toàn có thể được mô hình hóa khác nhau ở mỗi tầng, và đó không phải là mâu thuẫn cần giải quyết — nó phản ánh đối tượng sử dụng và mối quan tâm khác nhau tại mỗi điểm:
+
+- **Schema database nguồn**: do đội ứng dụng sở hữu, tối ưu cho tính đúng đắn giao dịch và ghi từng dòng. Đội phân tích hiếm khi kiểm soát được nó và nên xem nó như một hợp đồng bên ngoài có thể thay đổi mà không báo trước.
+- **Tầng tích hợp / staging**: chuẩn hóa kiểu dữ liệu, tên gọi và khóa giữa các nguồn trước khi áp dụng logic nghiệp vụ. Thường gần với grain của nguồn, chỉ thêm kiểu dữ liệu nhẹ, đổi tên và khử trùng.
+- **Tầng ETL / biến đổi**: mô hình hóa xoay quanh chính các bước biến đổi. Các bảng trung gian ở đây tồn tại để pipeline dễ kiểm thử và debug, không phải để consumer nghiệp vụ truy vấn trực tiếp.
+- **Schema warehouse / dimensional**: mô hình hóa cho báo cáo conform, có thể kiểm toán — chính là fact và dimension đã mô tả ở trên.
+- **Tầng BI / trình bày**: mô hình hóa theo cách người dùng khám phá dữ liệu, thường là một view phi chuẩn hóa thêm hoặc gán nhãn ngữ nghĩa (một bảng rộng duy nhất, hoặc định nghĩa metric của semantic layer) đánh đổi một phần linh hoạt lấy khả năng khám phá.
+- **Tầng feature engineering cho ML**: mô hình hóa xoay quanh tính đúng đắn theo thời điểm (point-in-time) giữa lúc huấn luyện và lúc phục vụ. Lỗi thường gặp nhất ở đây là rò rỉ (leakage) thông tin từ tương lai vào một dòng huấn luyện, khác với lỗi join dimensional sai grain, dù cả hai đều là "lỗi mô hình hóa".
+
+Dùng trục vòng đời này để hỏi "quyết định này nằm ở đâu và ai tiêu thụ nó", còn trục khái niệm/logic/vật lý để hỏi "quyết định này cam kết vào chi tiết hiện thực tới mức nào". Một bảng vật lý duy nhất trong warehouse vẫn có thể được mô tả ở mức khái niệm, logic hoặc vật lý; hai trục mô tả hai điều khác nhau và nên dùng cùng nhau, không thay thế cho nhau.
+
 ## Chuẩn hóa và phi chuẩn hóa
 
 Chuẩn hóa tách các dữ kiện thuộc về entity khác nhau và giảm bất thường cập nhật trong hệ thống vận hành. Dạng chuẩn một, hai, ba là cách hữu ích để suy nghĩ về nhóm lặp và phụ thuộc; không phải yêu cầu chia mọi model phân tích thành số bảng tối đa.
@@ -66,8 +79,32 @@ Dimensional modeling phù hợp phân tích ổn định, hướng quyết đị
 
 - **Mô hình doanh nghiệp kiểu Inmon** thường tích hợp warehouse chuẩn hóa toàn doanh nghiệp trước rồi mới công bố mart downstream. Cách này ưu tiên nhất quán chung nhưng có thể cần nhiều phối hợp và thiết kế ban đầu.
 - **Dimensional modeling kiểu Kimball** xây quanh quy trình nghiệp vụ, fact và dimension conform, thường bàn giao mart có ích theo từng bước. Bus matrix giúp các mart nhất quán.
-- **Anchor Modeling** là hướng quan hệ có lịch sử, tách định danh ổn định khỏi thuộc tính/quan hệ thay đổi. Nó hỗ trợ tiến hóa schema thường xuyên nhưng thêm khái niệm và join; chỉ dùng khi linh hoạt thời gian giải quyết vấn đề thực.
-- **Activity schema** biểu diễn sự kiện nghiệp vụ thành activity thiên về ghi nối tiếp, có timestamp, actor và entity liên quan. Nó làm phân tích theo sự kiện linh hoạt, nhưng consumer vẫn cần định nghĩa event, quy tắc khử trùng và trạng thái dẫn xuất khi cần snapshot hiện tại.
+
+Anchor Modeling và Activity Schema đáng xem kỹ hơn vì mỗi cách đều có thuật ngữ riêng, dễ dùng sai nếu không thấy rõ các thành phần được đặt tên.
+
+### Thuật ngữ Anchor Modeling
+
+Anchor Modeling là hướng quan hệ có lịch sử, tách định danh ổn định khỏi thuộc tính/quan hệ thay đổi, dùng bốn loại bảng được đặt tên:
+
+- **Anchors (mỏ neo)** chỉ giữ định danh — một surrogate key và không gì khác, tương tự hub trong Data Vault. Bảng `Anchor_Customer` không có cột mô tả nào cả, chỉ có khóa và metadata về thời điểm dòng được tạo.
+- **Attributes (thuộc tính)** giữ một thuộc tính có phiên bản theo thời gian trên mỗi bảng, mỗi bảng khóa ngược về anchor của nó. Email và phân khúc của khách hàng nằm ở hai bảng attribute riêng biệt, để một bên có thể giữ lịch sử độc lập với bên kia thay vì buộc mọi thuộc tính phải đổi phiên bản cùng lúc.
+- **Ties (liên kết)** ghi nhận quan hệ giữa các anchor — tương đương bảng link trong Data Vault — và bản thân có thể được versioned theo thời gian khi quan hệ đó thay đổi (ví dụ: sales rep nào phụ trách một tài khoản).
+- **Knots (nút)** giữ các giá trị tra cứu nhỏ, cardinality thấp, có thể dùng lại, như mã trạng thái hoặc quốc gia, dùng chung cho nhiều anchor để không phải lặp lại cùng một danh sách mã cho từng entity.
+
+**Ví dụ (minh họa).** Một anchor `Customer` với các bảng attribute `Email` và `Segment`, cùng một knot `Country`, nghĩa là khi đổi segment chỉ ghi một dòng mới vào bảng attribute segment; bảng attribute email, anchor và knot country không bị đụng tới.
+
+**Lỗi thường gặp.** Tách mỗi thuộc tính thành một bảng riêng làm thay đổi schema trở thành thao tác cộng thêm — thêm bảng thay vì alter bảng — nhưng một truy vấn đơn giản "xem thông tin khách hàng này" giờ phải join qua rất nhiều bảng. Hầu hết hiện thực Anchor Modeling tạo sẵn các view báo cáo rộng ở trên để che việc này khỏi consumer phía dưới; truy vấn trực tiếp cấu trúc anchor trong công cụ BI là lỗi áp dụng thường gặp.
+
+### Triết lý thiết kế Activity Schema
+
+Thiết kế Activity Schema (gắn liền với cách tiếp cận Narrator / "activity schema" được Ahmed Elsamadisi phổ biến) xuất phát từ một giả định khác với dimensional modeling: thay vì tách một sự kiện thành fact và dimension rồi join lại lúc truy vấn, mọi sự kiện mà nghiệp vụ quan tâm được append thành một dòng vào một bảng rộng duy nhất, thường gọi là **activity stream**. Mỗi dòng đã mang sẵn actor, activity, timestamp và các cột feature mà activity đó cần, nên phần lớn câu hỏi kiểu "bao nhiêu khách hàng đã làm X" hay "thời gian giữa X và Y" có thể trả lời bằng cách lọc và tự join trên chính bảng đó, thay vì dựng một star schema.
+
+Hai quy tắc thiết kế mang lại phần lớn lợi ích:
+
+- **Một định nghĩa chuẩn duy nhất cho mỗi activity.** "Đã đặt đơn hàng" được định nghĩa một lần, ở một nơi, và mọi team đọc từ cùng định nghĩa đó thay vì tự viết SQL riêng cho việc gì được tính là một đơn hàng. Đây chính là điều làm cho metric kết quả có thể chia sẻ và so sánh được giữa các team — không ai âm thầm định nghĩa lại cùng một activity với bộ lọc hơi khác.
+- **Không cần join cho phần lớn phân tích.** Vì grain là "một lần xảy ra activity", phần lớn phân tích funnel, retention và thời gian giữa các sự kiện chỉ cần đọc và tự join activity stream, không cần điều hướng một bus matrix các dimension conform.
+
+**Lỗi thường gặp.** Một snapshot trạng thái hiện tại (ví dụ "gói hiện tại của khách hàng") vẫn phải được suy ra từ lịch sử activity khi consumer cần — activity stream không loại bỏ nhu cầu về trạng thái dẫn xuất đã nói ở phần trước của trang này. Một bảng rộng duy nhất cũng có thể tích lũy rất nhiều cột feature thưa nếu thuộc tính của mọi activity đều giữ trên cùng một dòng; chi phí đó được đánh đổi với sự đơn giản của việc không phải join, và cần cân nhắc có chủ đích chứ không phải mặc định bỏ qua.
 
 Đây là các họ thiết kế, không phải quy tắc loại trừ nhau. Platform có thể dùng tầng tích hợp chuẩn hóa, cấu trúc historized và mart dimensional phục vụ các nhu cầu khác nhau. Chọn cách đơn giản nhất đáp ứng tích hợp, lịch sử, thay đổi và tiêu thụ.
 
@@ -86,6 +123,17 @@ Dữ liệu chủ mô tả entity nghiệp vụ dùng chung như khách hàng/s�
 - [ ] Quyết định khái niệm, logic và vật lý được tách riêng, rà soát đúng cấp độ.
 - [ ] Chuẩn hóa hoặc phi chuẩn hóa được biện minh bằng hành vi cập nhật và workload tiêu thụ.
 - [ ] Dimension dùng chung và định danh dữ liệu chủ/tham chiếu có chủ sở hữu rõ.
+
+## Các thực hành data engineering: checklist tổng hợp
+
+Quyết định mô hình hóa không đứng một mình; chúng tương tác với các thực hành ingestion, orchestration và governance đã trình bày ở nơi khác trong roadmap này. Checklist dưới đây gom các thực hành đó thành một lượt rà soát chéo, chạy cùng với checklist rà soát mô hình hóa ở trên. Mỗi mục liên kết tới trang trình bày chi tiết thay vì giải thích lại ở đây.
+
+- [ ] **Nạp dữ liệu thô trước khi mô hình hóa.** Ưu tiên landing kiểu lake / raw-zone-first để một lỗi mô hình hóa có thể tính lại từ bản sao chưa biến đổi của nguồn thay vì bị "đóng cứng" vĩnh viễn. Xem [Lưu trữ, Kho dữ liệu và Table Format](storage-warehousing-and-formats.html) và [Kiến trúc nền tảng và vòng đời](platform-architecture-and-lifecycle.html).
+- [ ] **Làm cho biến đổi idempotent.** Chạy lại một pipeline mô hình hóa phải cho cùng kết quả, không nhân đôi hay lệch, nhất là sau một lần retry hoặc backfill. Xem [Điều phối pipeline](orchestration.html).
+- [ ] **Ưu tiên khóa nghiệp vụ/tự nhiên ổn định cho join** ở nơi chúng thực sự ổn định, thay vì tạo ra surrogate key trước khi biết định danh nguồn có đáng tin hay không. Chỉ đưa surrogate key vào khi lịch sử hoặc định danh liên hệ thống thực sự cần — xem phần "Fact và dimension" ở trên.
+- [ ] **Giữ pipeline khai báo (declarative) khi có thể**, mô tả output và phụ thuộc mong muốn thay vì luồng điều khiển từng bước mệnh lệnh (imperative), để logic phụ thuộc và backfill nằm trong orchestrator thay vì rải rác trong script. Xem [Điều phối pipeline](orchestration.html).
+- [ ] **Tập trung metadata vào một catalog** để định danh bảng, schema, chủ sở hữu và lineage có thể tra cứu được thay vì chỉ nằm trong đầu từng người. Xem [Metadata Catalog, khám phá và lineage](metadata-catalogs-and-lineage.html).
+- [ ] **Tránh ALTER DDL tại chỗ trên bảng production.** Ưu tiên thay đổi schema theo kiểu cộng thêm, có versioned, hoặc dùng tính năng schema-evolution của chính table format, thay vì alter hình dạng một bảng đang chạy ngay dưới chân các consumer đang đọc. Xem [Lưu trữ, Kho dữ liệu và Table Format](storage-warehousing-and-formats.html).
 
 ## Bài tập
 

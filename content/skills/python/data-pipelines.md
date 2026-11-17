@@ -55,6 +55,22 @@ In production, use typed models or a schema validation library when the contract
 
 Good Python pipeline code should have logging, validation, bounded retries, tests, and clear error messages. It should also expose a useful run summary: input rows, accepted rows, rejected rows, output location, and the run's source watermark.
 
+## Notebooks: from exploration to a pipeline step
+
+Notebooks are a reasonable place to explore data, but left unmanaged they produce **notebook sprawl**: each analyst or engineer keeps their own copy of similar exploratory logic in a separate notebook, duplicated and slowly drifting apart, with no single shared source of truth for what the "right" version of a transformation is. The symptom is usually several near-identical notebooks solving the same problem slightly differently, none of them owned or tested, and no way to tell which one produced a given result.
+
+**Papermill** is the concrete mechanism for turning a notebook into a reusable, production pipeline step instead of a one-off manual artifact. It parameterizes a notebook by injecting values into a cell tagged `parameters`, executes the notebook programmatically from the command line or from code, and saves a new output notebook that contains the run's results alongside the original cells. That output notebook is itself the run's record: inputs, code, and rendered results together, inspectable after the fact.
+
+```bash
+papermill analysis.ipynb runs/analysis_2026-11-17.ipynb -p run_date 2026-11-17 -p min_amount 0
+```
+
+Because a parameterized, programmatically executed notebook is just another command with inputs and outputs, an orchestrator such as Dagster or Airflow can run it as one step in a scheduled pipeline — with the same retries, logging, and dependency tracking as any other task — rather than relying on someone to open and re-run it by hand.
+
+**Failure modes.** Treating the interactively-developed notebook as production-ready without clearing hidden state (variables left over from manual exploration that do not exist on a fresh run); skipping validation inside the notebook because "it ran without errors" is not the same as correct output; letting the output notebooks pile up ungoverned, which recreates notebook sprawl one layer down.
+
+**Validation.** Execute the notebook fresh (no leftover kernel state) as part of the check before scheduling it; assert on the notebook's own output values, not just its exit code; keep the parameterized notebook and its tests in version control like any other pipeline code, and treat the output notebook as a run artifact, not the source of truth.
+
 ## Practice
 
 Extend the starter reader to count malformed files without aborting the whole batch, emit a structured summary, and produce the same output when run twice on unchanged input. Document whether bad files are skipped, quarantined, or fatal and why.
